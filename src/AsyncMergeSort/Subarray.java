@@ -4,22 +4,36 @@ public class Subarray {
     protected final int[] _arr;
     protected Subarray _leftSubarray, _rightSubarray;
     protected final int _leftIdx;
+
+    protected int _middle;
     protected final int _rightIdx;
 
     public Subarray(int[] arr, int leftIdx, int rightIdx) {
         this._arr = arr;
         this._leftIdx = leftIdx;
         this._rightIdx = rightIdx;
+        _middle = getMiddle();
 
         if (!hasSingleElement()) {
-            int middle = getMiddle();
-            _leftSubarray = new Subarray(arr, leftIdx, middle);
-            _rightSubarray = new Subarray(arr, middle + 1, rightIdx);
+            _leftSubarray = new Subarray(arr, leftIdx, _middle);
+            _rightSubarray = new Subarray(arr, _middle + 1, rightIdx);
         }
+    }
+
+    public Subarray(Subarray left, Subarray right) {
+        this._arr = left._arr;
+        this._leftIdx = left._leftIdx;
+        this._rightIdx = right._rightIdx;
+        _middle = right._leftIdx - 1;
+
+        _leftSubarray = new Subarray(_arr, _leftIdx, _middle);
+        _rightSubarray = new Subarray(_arr, _middle + 1, _rightIdx);
     }
 
     public void sort()
     {
+        if (_rightIdx == 16)
+            System.out.println("break");
         if (!hasSingleElement()) {
             _leftSubarray.sort();
             _rightSubarray.sort();
@@ -61,6 +75,10 @@ public class Subarray {
             rightIdx++;
             resultIdx++;
         }
+    }
+
+    public Subarray joinRightSubarray(Subarray subarray) {
+        return new Subarray(this, subarray);
     }
 
     private int getLength() {

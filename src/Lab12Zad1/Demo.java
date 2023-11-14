@@ -7,7 +7,7 @@ import AsyncMergeSort.Subarray;
 public class Demo {
     private final static int NUMBER_OF_THREADS = 4;
     public static void main(String[] args) {
-        int[] array = { 1, 5, 2, 39, 29, 1, 199, 12, 42, 18, 129, 0, 381, 432, 32, 3 };
+        int[] array = { 1, 5, 2, 39, 29, 1, 199, 12, -17, 3, 42, 18, 129, 0, 381, 432, 32 };
 
 
         AsyncMergeSort.printArray(array);
