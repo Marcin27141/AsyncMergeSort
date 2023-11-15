@@ -8,7 +8,7 @@ public class AsyncMergeSort {
     public AsyncMergeSort(int[] array, int nrOfThreads) {
 
         this.array = array;
-        this.nrOfThreads = nrOfThreads;
+        this.nrOfThreads = Math.max(1, Math.min(nrOfThreads, array.length));
     }
 
     public void sortAsync() {
