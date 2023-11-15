@@ -4,19 +4,15 @@ public class Subarray {
     protected final int[] _arr;
     protected Subarray _leftSubarray, _rightSubarray;
     protected final int _leftIdx;
-
-    protected int _middle;
     protected final int _rightIdx;
 
     public Subarray(int[] arr, int leftIdx, int rightIdx) {
         this._arr = arr;
         this._leftIdx = leftIdx;
         this._rightIdx = rightIdx;
-        _middle = getMiddle();
 
         if (!hasSingleElement()) {
-            _leftSubarray = new Subarray(arr, leftIdx, _middle);
-            _rightSubarray = new Subarray(arr, _middle + 1, rightIdx);
+            createSubarrays(getMiddle());
         }
     }
 
@@ -24,16 +20,16 @@ public class Subarray {
         this._arr = left._arr;
         this._leftIdx = left._leftIdx;
         this._rightIdx = right._rightIdx;
-        _middle = right._leftIdx - 1;
+        createSubarrays(right._leftIdx - 1);
+    }
 
-        _leftSubarray = new Subarray(_arr, _leftIdx, _middle);
-        _rightSubarray = new Subarray(_arr, _middle + 1, _rightIdx);
+    private void createSubarrays(int leftEndIdx) {
+        _leftSubarray = new Subarray(_arr, _leftIdx, leftEndIdx);
+        _rightSubarray = new Subarray(_arr, leftEndIdx + 1, _rightIdx);
     }
 
     public void sort()
     {
-        if (_rightIdx == 16)
-            System.out.println("break");
         if (!hasSingleElement()) {
             _leftSubarray.sort();
             _rightSubarray.sort();
@@ -86,14 +82,15 @@ public class Subarray {
     }
 
     private int getMiddle() {
-        return _leftIdx + (_rightIdx - _leftIdx) / 2;
+        int middle = _leftIdx + (_rightIdx - _leftIdx) / 2;
+        return getLength() % 2 == 0 || hasSingleElement() ?
+                middle : middle - 1;
     }
 
     private int[] getArrayCopy() {
         int length = getLength();
         int[] copy = new int[length];
-        for (int i = 0; i < length; ++i)
-            copy[i] = _arr[_leftIdx + i];
+        System.arraycopy(_arr, _leftIdx, copy, 0, length);
         return copy;
     }
 

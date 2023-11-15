@@ -30,6 +30,10 @@ public class SortThread extends Thread {
         return isResponsibleForMerging() && id != threads.length - 1;
     }
 
+    private Boolean nextThreadIsDoneSorting() {
+        return threads[id + 1].sortDone;
+    }
+
     private Boolean isDoneAfterMergingArrays(int number) {
         return id % (number * 2) != 0 || id + number >= threads.length;
     }
@@ -43,6 +47,18 @@ public class SortThread extends Thread {
         return threads[threads.length-1].sortDone;
     }
 
+    private SortThread getThreadToMerge(int i) {
+        return (id + (i/2) < threads.length) ? threads[id + (i/2)] : null;
+    }
+
+    private void waitForNotification() {
+        try {
+            lock.wait();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void run() {
         sortAsync();
@@ -51,38 +67,24 @@ public class SortThread extends Thread {
 
     private void sortAsync() {
         subarray.sort();
-        synchronized (lock) {
-            System.out.println("thread " + id + " sorted");
-            for (int j = 0; j < subarray._arr.length; j++)
-                System.out.print(subarray._arr[j] + " ");
-            System.out.println();
-        }
         performAfterSort();
     }
 
     private void performAfterSort() {
         synchronized (lock) {
-            if (!isResponsibleForLastThread())
-                sortDone = true;
-            else {
+            sortDone = true;
+
+            if (isResponsibleForLastThread()) {
                 while (!lastThreadFinishedSorting()) {
-                    try {
-                        lock.wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                    waitForNotification();
                 }
             }
 
             lock.notifyAll();
 
             if (mustWaitBeforeMerging()) {
-                while (!threads[id + 1].sortDone) {
-                    try {
-                        lock.wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                while (!nextThreadIsDoneSorting()) {
+                    waitForNotification();
                 }
             }
         }
@@ -95,17 +97,11 @@ public class SortThread extends Thread {
         int i = 2;
 
         while (!mergeDone) {
-            var nextThread = (id + (i/2) < threads.length) ? threads[id + (i/2)] : this;
+            var nextThread = getThreadToMerge(i);
 
-            if (this != nextThread) {
+            if (nextThread != null) {
                 subarray = subarray.joinRightSubarray(nextThread.subarray);
                 subarray.merge();
-                synchronized (lock) {
-                    System.out.println("thread " + id + " merged");
-                    for (int j = 0; j < subarray._arr.length; j++)
-                        System.out.print(subarray._arr[j] + " ");
-                    System.out.println();
-                }
                 subarraysMerged = i;
             }
 
@@ -113,11 +109,7 @@ public class SortThread extends Thread {
                 lock.notifyAll();
                 if (!isDoneAfterMergingArrays(i)) {
                     while (awaitedThreadStillMerging(i)) {
-                        try {
-                            lock.wait();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
+                        waitForNotification();
                     }
                 }
                 else mergeDone = true;

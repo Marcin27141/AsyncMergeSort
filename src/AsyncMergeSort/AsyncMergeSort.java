@@ -1,23 +1,26 @@
 package AsyncMergeSort;
 
 public class AsyncMergeSort {
+    private final int[] array;
+    private final int nrOfThreads;
     SortThread[] threads;
+    
+    public AsyncMergeSort(int[] array, int nrOfThreads) {
 
-    public void sortAsync(int[] arr, int nrOfThreads) {
+        this.array = array;
+        this.nrOfThreads = nrOfThreads;
+    }
+
+    public void sortAsync() {
         if (nrOfThreads == 1)
-            new Subarray(arr, 0, arr.length - 1).sort();
+            new Subarray(array, 0, array.length - 1).sort();
         else {
-            threads = new SortThread[nrOfThreads];
-            int part = arr.length / nrOfThreads;
-            for (int i = 0; i < nrOfThreads; i++) {
-                int rightIdx = i == nrOfThreads - 1 ? arr.length - 1 : (i+1)*part - 1;
-                Subarray subarray = new Subarray(arr, i*part, rightIdx);
-                threads[i] = new SortThread(subarray, i, threads);
-                System.out.println(i + " " + i*part + " " + rightIdx);
-                threads[i].start();
-            }
+            invokeMultithreadingSorting();
+            waitForResult();
         }
+    }
 
+    private void waitForResult() {
         try {
             threads[0].join();
         } catch (InterruptedException e) {
@@ -25,11 +28,18 @@ public class AsyncMergeSort {
         }
     }
 
-    public static void printArray(int[] arr)
-    {
-        int n = arr.length;
-        for (int i = 0; i < n; ++i)
-            System.out.print(arr[i] + " ");
-        System.out.println();
+    private void invokeMultithreadingSorting() {
+        threads = new SortThread[nrOfThreads];
+        int subarrayLength = array.length / nrOfThreads;
+        for (int i = 0; i < nrOfThreads; i++) {
+            threads[i] = createSortThread(subarrayLength, i);
+            threads[i].start();
+        }
+    }
+    
+    private SortThread createSortThread(int subarrayLength, int threadIdx) {
+        int rightIdx = threadIdx == nrOfThreads - 1 ? array.length - 1 : (threadIdx+1)*subarrayLength - 1;
+        Subarray subarray = new Subarray(array, threadIdx*subarrayLength, rightIdx);
+        return new SortThread(subarray, threadIdx, threads);
     }
 }
